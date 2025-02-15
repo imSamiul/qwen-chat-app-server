@@ -45,7 +45,7 @@ userSchema.method('createRefreshToken', async function createRefreshToken() {
   try {
     const { _id } = this;
     const refreshToken = jwt.sign(
-      { _id },
+      { id: _id },
       REFRESH_TOKEN_SECRET as Secret,
       {
         expiresIn: REFRESH_TOKEN_LIFE,

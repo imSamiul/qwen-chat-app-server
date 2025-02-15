@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -16,6 +17,7 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 connectDB();
 
 // Basic route

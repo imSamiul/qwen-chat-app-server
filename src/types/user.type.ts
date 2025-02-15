@@ -9,15 +9,7 @@ export type User = Document & {
   friends: User[];
   friendRequests: User[];
 };
-export type SignUpCredentials = {
-  username: string;
-  email: string;
-  password: string;
-};
-export type SignInCredentials = {
-  email: string;
-  password: string;
-};
+
 export type UserMethods = {
   createAccessToken: () => Promise<string>;
   createRefreshToken: () => Promise<string>;

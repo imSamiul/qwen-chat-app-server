@@ -1,4 +1,7 @@
 import { Request, Response } from 'express';
+import jwt, { SignOptions } from 'jsonwebtoken';
+import mongoose from 'mongoose';
+import TokenModel from '../models/token.model';
 import UserModel from '../models/user.model';
 import { convertMs } from '../utils/convertMs';
 
@@ -105,5 +108,49 @@ export async function handleLogin(req: Request, res: Response) {
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to sign in';
     res.status(500).json({ message: errorMessage });
+  }
+}
+// POST: refresh token
+export async function handleRefreshToken(req: Request, res: Response) {
+  const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+  const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+  const accessTokenLife = process.env.ACCESS_TOKEN_LIFE || '15m';
+
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(403).json({ error: 'Access denied, token missing!' });
+    }
+
+    const tokenDoc = await TokenModel.findOne({ refreshToken });
+
+    if (!tokenDoc) {
+      return res.status(401).json({ error: 'Token expired!' });
+    }
+
+    // Type guard for the secret
+    if (!accessTokenSecret) {
+      throw new Error('ACCESS_TOKEN_SECRET is not configured');
+    }
+
+    const payload = jwt.verify(tokenDoc.refreshToken, refreshTokenSecret!) as {
+      _id: mongoose.Types.ObjectId;
+    };
+
+    const accessToken = jwt.sign(
+      { id: payload?._id },
+      accessTokenSecret as string,
+      {
+        expiresIn: accessTokenLife,
+      } as SignOptions
+    );
+
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to refresh token';
+
+    res.status(403).json({ message: errorMessage });
   }
 }
