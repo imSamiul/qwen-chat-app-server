@@ -3,7 +3,25 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import TokenModel from '../models/token.model';
 import UserModel from '../models/user.model';
+import { User } from '../types/user.type';
 import { convertMs } from '../utils/convertMs';
+
+//GET: get profile of the user
+export async function handleProfile(req: Request, res: Response) {
+  try {
+    const user = req.user;
+    const findUser = await UserModel.findById((user as User)._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ user: findUser });
+  } catch (error) {
+    console.error('Profile Error:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to get profile';
+    res.status(500).json({ message: errorMessage });
+  }
+}
 
 // POST: Create a new user
 export async function handleSignUp(req: Request, res: Response) {
@@ -99,7 +117,7 @@ export async function handleLogin(req: Request, res: Response) {
       sameSite: 'strict',
     };
 
-    res.status(200).cookie('refreshToken', refreshToken, options).json({
+    res.status(201).cookie('refreshToken', refreshToken, options).json({
       user,
       accessToken,
     });
@@ -135,11 +153,11 @@ export async function handleRefreshToken(req: Request, res: Response) {
     }
 
     const payload = jwt.verify(tokenDoc.refreshToken, refreshTokenSecret!) as {
-      _id: mongoose.Types.ObjectId;
+      user: { _id: mongoose.Types.ObjectId; uniqueId: string };
     };
 
     const accessToken = jwt.sign(
-      { id: payload?._id },
+      { user: payload?.user },
       accessTokenSecret as string,
       {
         expiresIn: accessTokenLife,

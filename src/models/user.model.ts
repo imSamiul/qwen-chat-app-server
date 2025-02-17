@@ -27,9 +27,9 @@ const refreshTokenLife = convertMs(REFRESH_TOKEN_LIFE) as number;
 
 userSchema.method('createAccessToken', async function createAccessToken() {
   try {
-    const { _id } = this;
+    const { _id, uniqueId } = this;
     const accessToken = jwt.sign(
-      { _id },
+      { user: { _id, uniqueId } },
       ACCESS_TOKEN_SECRET as Secret,
       {
         expiresIn: ACCESS_TOKEN_LIFE,
@@ -43,9 +43,9 @@ userSchema.method('createAccessToken', async function createAccessToken() {
 });
 userSchema.method('createRefreshToken', async function createRefreshToken() {
   try {
-    const { _id } = this;
+    const { _id, uniqueId } = this;
     const refreshToken = jwt.sign(
-      { id: _id },
+      { user: { _id, uniqueId } },
       REFRESH_TOKEN_SECRET as Secret,
       {
         expiresIn: REFRESH_TOKEN_LIFE,

@@ -10,6 +10,11 @@ export type User = Document & {
   friendRequests: User[];
 };
 
+export type UserPayload = {
+  _id: Types.ObjectId;
+  uniqueId: string;
+};
+
 export type UserMethods = {
   createAccessToken: () => Promise<string>;
   createRefreshToken: () => Promise<string>;
