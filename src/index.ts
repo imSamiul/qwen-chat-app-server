@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -10,10 +11,17 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // In production, you should configure this more securely
+    origin: 'http://localhost:3001', // In production, you should configure this more securely
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
+
+const corsOptions = {
+  origin: 'http://localhost:3001', // Frontend URL
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
