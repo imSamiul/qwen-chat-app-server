@@ -1,10 +1,23 @@
 import { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import { z } from 'zod';
 import TokenModel from '../models/token.model';
 import UserModel from '../models/user.model';
 import { User } from '../types/user.type';
+import { ApiError, handleApiError } from '../utils/apiError';
 import { convertMs } from '../utils/convertMs';
+import { createCookieOptions } from '../utils/cookieOptions';
+
+const signupSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters long' }), // Add a custom error message
+  email: z.string().email({ message: 'Invalid email address' }),
+  password: z
+    .string()
+    .min(6, { message: 'Password must be at least 6 characters long' }),
+});
 
 //GET: get profile of the user
 export async function handleProfile(req: Request, res: Response) {
@@ -25,66 +38,50 @@ export async function handleProfile(req: Request, res: Response) {
 
 // POST: Create a new user
 export async function handleSignUp(req: Request, res: Response) {
-  const { username, email, password } = req.body;
-  if (!username || !email || !password) {
-    return res.status(422).json({ message: 'Missing required fields' });
-  }
   try {
-    //check if username is already taken:
-    const existingUser = await UserModel.findOne({ email });
+    // Validate input
+    const input = signupSchema.parse(req.body);
+
+    // Check for existing user
+    const existingUser = await UserModel.findOne({ email: input.email });
     if (existingUser) {
-      return res.status(400).json({ error: 'Email is taken.' });
+      throw new ApiError(409, 'Email already in use');
     }
 
-    const newUser = new UserModel({
-      username,
-      email,
-      password,
-    });
+    // Create and save new user
+    const newUser = new UserModel(input);
+    const savedUser = await newUser.save();
 
-    if (!newUser) {
-      return res.status(400).json({ message: 'Invalid role specified' });
-    }
+    // Generate tokens
+    const [accessToken, refreshToken] = await Promise.all([
+      newUser.createAccessToken(),
+      newUser.createRefreshToken(),
+    ]);
 
-    try {
-      const savedUser = await newUser.save();
-      const accessToken = await newUser.createAccessToken();
-      const refreshToken = await newUser.createRefreshToken();
-
-      const refreshTokenLife = process.env.REFRESH_TOKEN_LIFE ?? '7d';
-      const jwtCookieExpire = convertMs(refreshTokenLife) as number; // Converts '7d' to milliseconds
-      const options: {
-        expires: Date;
-        httpOnly: boolean;
-        secure: boolean;
-        sameSite: 'strict';
-      } = {
-        expires: new Date(Date.now() + jwtCookieExpire),
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      };
-
-      res.status(201).cookie('refreshToken', refreshToken, options).json({
+    // Set cookie and send response
+    res
+      .status(201)
+      .cookie(
+        'refreshToken',
+        refreshToken,
+        createCookieOptions(process.env.REFRESH_TOKEN_LIFE)
+      )
+      .json({
         user: savedUser,
         accessToken,
       });
-      return;
-    } catch (saveError) {
-      console.error('Error saving user:', saveError);
-      return res.status(500).json({
-        message: 'Error creating account',
-        error: saveError instanceof Error ? saveError.message : 'Unknown error',
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const firstError = error.errors[0];
+      return res.status(422).json({
+        message: firstError.message,
+        field: firstError.path.join('.'),
       });
     }
-  } catch (error) {
-    console.error('SignUp Error:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to create account';
-    res.status(500).json({ message: errorMessage });
-    return;
+    handleApiError(res, error);
   }
 }
+
 // POST: Login user
 export async function handleLogin(req: Request, res: Response) {
   const { email, password } = req.body;
