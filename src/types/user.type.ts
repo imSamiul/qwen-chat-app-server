@@ -6,8 +6,8 @@ export type User = Document & {
   username: string;
   email: string;
   password: string;
-  friends: User[];
-  friendRequests: User[];
+  friends: Types.ObjectId[];
+  friendRequests: Types.ObjectId[];
 };
 
 export type UserPayload = {

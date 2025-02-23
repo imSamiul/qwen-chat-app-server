@@ -129,7 +129,7 @@ export async function handleLogin(req: Request, res: Response) {
 export async function handleRefreshToken(req: Request, res: Response) {
   const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
   const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
-  const accessTokenLife = process.env.ACCESS_TOKEN_LIFE || '15m';
+  const accessTokenLife = process.env.ACCESS_TOKEN_LIFE || '30m';
 
   try {
     const refreshToken = req.cookies.refreshToken;

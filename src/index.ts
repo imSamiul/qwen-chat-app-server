@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import { config } from './config/config';
 import connectDB from './db/mongoose';
 import authRoutes from './routes/auth.routes';
+import friendRoutes from './routes/friend.routes';
 
 const app = express();
 const httpServer = createServer(app);
@@ -33,6 +34,7 @@ app.get('/', (req, res) => {
   res.send('QWen Chat App Server is running');
 });
 app.use('/api/auth', authRoutes);
+app.use('/api/friend', friendRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
