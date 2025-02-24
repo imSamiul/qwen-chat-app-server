@@ -2,48 +2,40 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import { config } from './config/config';
 import connectDB from './db/mongoose';
 import authRoutes from './routes/auth.routes';
 import friendRoutes from './routes/friend.routes';
+import setupSocket from './socket';
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:3001', // In production, you should configure this more securely
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-});
+
+// Initialize Socket.IO with authentication
+const socketStore = setupSocket(httpServer);
 
 const corsOptions = {
-  origin: 'http://localhost:3001', // Frontend URL
+  origin: process.env.CLIENT_URL || 'http://localhost:3001',
   credentials: true,
 };
-app.use(cors(corsOptions));
 
-// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET));
+
+// Connect to database
 connectDB();
 
-// Basic route
+// Routes
 app.get('/', (req, res) => {
   res.send('QWen Chat App Server is running');
 });
+
 app.use('/api/auth', authRoutes);
 app.use('/api/friend', friendRoutes);
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
-});
+// Make socketStore available to routes
+app.set('socketStore', socketStore);
 
 // Start server
 httpServer.listen(config.port, () => {

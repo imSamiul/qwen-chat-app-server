@@ -1,12 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserPayload } from '../types/user.type';
+import { JwtPayload } from '../types/jwt.type';
 
 const { ACCESS_TOKEN_SECRET } = process.env;
-
-interface JwtPayload {
-  user: UserPayload;
-}
 
 export async function isAuthenticated(
   req: Request,

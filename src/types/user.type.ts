@@ -10,11 +10,6 @@ export type User = Document & {
   friendRequests: Types.ObjectId[];
 };
 
-export type UserPayload = {
-  _id: Types.ObjectId;
-  uniqueId: string;
-};
-
 export type UserMethods = {
   createAccessToken: () => Promise<string>;
   createRefreshToken: () => Promise<string>;
