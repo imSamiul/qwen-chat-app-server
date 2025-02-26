@@ -8,6 +8,8 @@ export const handleFriendRequest = (socket: AuthenticatedSocket) => {
   socket.on(
     'sendFriendRequest',
     async (data: { senderId: Types.ObjectId; recipientId: string }) => {
+      console.log(data);
+
       try {
         const { senderId, recipientId } = data;
         if (socket.user?._id !== senderId) {
