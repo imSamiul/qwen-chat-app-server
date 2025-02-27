@@ -1,42 +1,4 @@
-import { Types } from 'mongoose';
 import { AuthenticatedSocket } from '../middleware/socketAuth';
-import UserModel from '../models/user.model';
-import * as socketStore from './socketStore';
-
-// Friend request handler
-export const handleFriendRequest = (socket: AuthenticatedSocket) => {
-  socket.on(
-    'sendFriendRequest',
-    async (data: { senderId: Types.ObjectId; recipientId: string }) => {
-      console.log(data);
-
-      try {
-        const { senderId, recipientId } = data;
-        if (socket.user?._id !== senderId) {
-          socket.emit('error', { message: 'Unauthorized' });
-          return;
-        }
-        // Save to database (your logic here)
-        console.log(`Friend request from ${senderId} to ${recipientId}`);
-
-        const recipient = await UserModel.findById(recipientId);
-        if (!recipient?.friendRequests.includes(senderId)) {
-          recipient?.friendRequests.push(senderId);
-          await recipient?.save();
-        }
-
-        // Emit real-time notification to the recipient
-        socketStore.emitToUser(recipientId, 'newFriendRequest', {
-          senderId,
-          senderName: (await UserModel.findById(senderId))?.username,
-          createdAt: new Date(),
-        });
-      } catch (error) {
-        console.error('Error handling friend request:', error);
-      }
-    }
-  );
-};
 
 // // Message handler
 // export const handleMessage = (socket: AuthenticatedSocket) => {

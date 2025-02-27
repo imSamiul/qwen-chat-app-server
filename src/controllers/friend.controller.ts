@@ -2,15 +2,21 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import UserModel from '../models/user.model';
 import { ApiError, handleApiError } from '../utils/apiError';
+import { send } from 'process';
+import mongoose from 'mongoose';
 
 const searchFriendSchema = z.object({
   uniqueId: z.string().min(1),
 });
+const sendFriendRequestSchema = z.object({
+  senderId:z.instanceof(mongoose.Types.ObjectId),
+  recipientId: z.instanceof(mongoose.Types.ObjectId)
+})
 
 // GET: search for friend
 export async function searchFriend(req: Request, res: Response) {
   const senderId = req.user!._id;
-  console.log(req.user);
+
 
   try {
     // validate input
@@ -42,3 +48,46 @@ export async function searchFriend(req: Request, res: Response) {
     handleApiError(res, error);
   }
 }
+//POST: send friend request
+export const handleFriendRequest = (req: Request, res: Response) => {
+ try {
+    // validate input
+    const { senderId, recipientId } = sendFriendRequestSchema.parse(req.query);
+      const recipient = await UserModel.findById(recipientId);
+      if (!recipient) {
+        throw new ApiError(404, 'Recipient not found');
+      }
+      // Check if recipient has already received a friend request from sender
+      
+        if (!recipient?.friendRequests.includes(senderId)) {
+          recipient?.friendRequests.push(senderId);
+          await recipient?.save();
+        }
+
+  socket.on(
+    'sendFriendRequest',
+    async (data: { senderId: Types.ObjectId; recipientId: string }) => {
+      console.log(data);
+
+      try {
+        const { senderId, recipientId } = data;
+        if (socket.user?._id !== senderId) {
+          socket.emit('error', { message: 'Unauthorized' });
+          return;
+        }
+        // Save to database (your logic here)
+        console.log(`Friend request from ${senderId} to ${recipientId}`);
+
+      
+        // Emit real-time notification to the recipient
+        socketStore.emitToUser(recipientId, 'newFriendRequest', {
+          senderId,
+          senderName: (await UserModel.findById(senderId))?.username,
+          createdAt: new Date(),
+        });
+      } catch (error) {
+        console.error('Error handling friend request:', error);
+      }
+    }
+  );
+};

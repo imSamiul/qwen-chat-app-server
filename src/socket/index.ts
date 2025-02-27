@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import { socketAuth } from '../middleware/socketAuth';
-import { handleFriendRequest, handleUserConnection } from './handlers';
+import { handleUserConnection } from './handlers';
 import * as socketStore from './socketStore';
 
 const setupSocket = (httpServer: HttpServer) => {
@@ -23,9 +23,6 @@ const setupSocket = (httpServer: HttpServer) => {
   io.on('connection', (socket: any) => {
     // Set up connection
     handleUserConnection(socket);
-
-    // Register event handlers
-    handleFriendRequest(socket);
   });
 
   return socketStore;
