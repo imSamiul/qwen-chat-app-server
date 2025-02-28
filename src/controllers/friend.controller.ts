@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import NotificationModel from '../models/notification.model';
 import UserModel from '../models/user.model';
 import * as socketStore from '../socket/socketStore';
 import { ApiError, handleApiError } from '../utils/apiError';
@@ -71,6 +72,14 @@ export async function handleSendFriendRequest(req: Request, res: Response) {
     }
 
     // Emit real-time notification to the recipient
+
+    const newNotification = new NotificationModel({
+      recipient: recipientId,
+      sender: senderId,
+      type: 'friend-request',
+      content: `${sender?.username} sent you a friend request`,
+    });
+    await newNotification.save();
 
     socketStore.emitToUser(recipientId, 'newFriendRequest', {
       senderId: senderId,

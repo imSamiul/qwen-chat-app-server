@@ -6,6 +6,7 @@ import { config } from './config/config';
 import connectDB from './db/mongoose';
 import authRoutes from './routes/auth.routes';
 import friendRoutes from './routes/friend.routes';
+import notificationRoutes from './routes/notification.routes';
 import setupSocket from './socket';
 
 const app = express();
@@ -33,6 +34,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/friend', friendRoutes);
+app.use('/api/notification', notificationRoutes);
 
 // Make socketStore available to routes
 app.set('socketStore', socketStore);
