@@ -2,7 +2,7 @@ import { Model, Types } from 'mongoose';
 
 // Define the Notification type
 export type NotificationType =
-  | 'friend-request'
+  | 'friend_request'
   | 'message'
   | 'group-message'
   | 'system';

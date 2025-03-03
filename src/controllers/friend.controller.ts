@@ -76,7 +76,7 @@ export async function handleSendFriendRequest(req: Request, res: Response) {
     const newNotification = new NotificationModel({
       recipient: recipientId,
       sender: senderId,
-      type: 'friend-request',
+      type: 'friend_request',
       content: `${sender?.username} sent you a friend request`,
     });
     await newNotification.save();

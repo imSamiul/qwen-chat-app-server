@@ -169,3 +169,17 @@ export async function handleRefreshToken(req: Request, res: Response) {
     res.status(403).json({ message: errorMessage });
   }
 }
+// POST: logout user
+export async function handleLogout(req: Request, res: Response) {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      throw new ApiError(403, 'Access denied, token missing!');
+    }
+
+    await TokenModel.findOneAndDelete({ refreshToken });
+    res.clearCookie('refreshToken').json({ message: 'Logout successful' });
+  } catch (error) {
+    handleApiError(res, error);
+  }
+}
