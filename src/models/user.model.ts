@@ -11,7 +11,7 @@ const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env;
 const userSchema = new mongoose.Schema<User, UserModelType, UserMethods>(
   {
     username: { type: String, required: true, unique: true },
-    uniqueId: { type: String, unique: true },
+    uniqueID: { type: String, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of friends
@@ -27,9 +27,9 @@ const refreshTokenLife = convertMs(REFRESH_TOKEN_LIFE) as number;
 
 userSchema.method('createAccessToken', async function createAccessToken() {
   try {
-    const { _id, uniqueId } = this;
+    const { _id, uniqueID } = this;
     const accessToken = jwt.sign(
-      { user: { _id, uniqueId } },
+      { user: { _id, uniqueID } },
       ACCESS_TOKEN_SECRET as Secret,
       {
         expiresIn: ACCESS_TOKEN_LIFE,
@@ -43,9 +43,9 @@ userSchema.method('createAccessToken', async function createAccessToken() {
 });
 userSchema.method('createRefreshToken', async function createRefreshToken() {
   try {
-    const { _id, uniqueId } = this;
+    const { _id, uniqueID } = this;
     const refreshToken = jwt.sign(
-      { user: { _id, uniqueId } },
+      { user: { _id, uniqueID } },
       REFRESH_TOKEN_SECRET as Secret,
       {
         expiresIn: REFRESH_TOKEN_LIFE,
@@ -75,9 +75,9 @@ userSchema.pre('save', async function (next) {
       console.error(error);
     }
   }
-  if (!this.uniqueId) {
+  if (!this.uniqueID) {
     const uuid = uuidv4();
-    this.uniqueId = `U-${uuid.slice(0, 8)}`;
+    this.uniqueID = `U-${uuid.slice(0, 8)}`;
   }
 
   return next();

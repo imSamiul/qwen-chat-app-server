@@ -2,7 +2,7 @@ import { Document, Model, Types } from 'mongoose';
 
 export type User = Document & {
   _id: Types.ObjectId;
-  uniqueId: string;
+  uniqueID: string;
   username: string;
   email: string;
   password: string;
